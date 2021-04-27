@@ -1,0 +1,96 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions' // 익스텐션 플러그인 적용
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId "com.example.testapplication"
+        minSdkVersion 29
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+
+        externalNativeBuild {
+            // set c++ flags, specify the STL: c++_shared, gnustl...
+            cmake {
+                cppFlags "-std=c++11 -frtti -fexceptions"
+                arguments "-DANDROID_PLATFORM=android-29",  // remember: same min sdk as before
+                        "-DANDROID_TOOLCHAIN=clang",
+                        "-DANDROID_STL=c++_shared",
+                        "-DANDROID_CPP_FEATURES=rtti exceptions"
+            }
+        }
+//        splits {
+//            abi {
+//                enable true
+//                reset()
+//                include 'arm64-v8a'
+//                universalApk false
+//            }
+//        }
+    }
+
+    sourceSets {
+        // tell to CMake where to find the native pre-build libraries:
+        main {
+            jniLibs.srcDirs = [
+                    "src/main/cppLibs/dlib/lib",   // remove if you only need opencv
+            ]
+            jni.srcDirs = []
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/*'
+        pickFirst 'lib/armeabi-v7a/*'
+        pickFirst 'lib/x86/*'
+        pickFirst 'lib/x86_64/*'
+        pickFirst "**/libc++_shared.so"
+//        pickFirst 'lib/armeabi-v7a/libdib.so'
+//        pickFirst 'lib/arm64-v8a/libdib.so'
+//        pickFirst 'lib/x86/libdib.so'
+//        pickFirst 'lib/x86_64/libdib.so'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
